@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Gastos">
+<meta name="theme-color" content="#16704f">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-180.png">
+<link rel="manifest" href="manifest.json">
+<title>Mis Gastos</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Una columna tipo libreta de bolsillo; arriba lo que puedes gastar hoy, abajo el plan mes a mes */
+:root{
+  --bg:#f3f5f2; --surface:#ffffff; --ink:#18221d; --muted:#5d6b63; --line:#dbe2dc;
+  --accent:#16704f; --accent-soft:#dcefe6; --warn:#b26a00; --warn-soft:#fbeed6; --crit:#b3261e; --crit-soft:#f8dedb;
+  --display:"Bricolage Grotesque", system-ui, sans-serif;
+  --body:"IBM Plex Sans", system-ui, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, monospace;
+  color-scheme:light;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#101613; --surface:#18201c; --ink:#e7eee9; --muted:#9aaba1; --line:#2a352f;
+  --accent:#4fc596; --accent-soft:#163428; --warn:#f0b14a; --warn-soft:#3a2c12; --crit:#f2867d; --crit-soft:#3d1a17; color-scheme:dark}}
+html{background:var(--bg);-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
+[hidden]{display:none!important}
+.wrap{max-width:720px;margin:0 auto;padding-inline:16px;padding-block:20px 48px;display:flex;flex-direction:column;gap:28px}
+h1,h2{font-family:var(--display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:1.9rem;line-height:1.1}
+h2{font-size:1.25rem}
+.eyebrow{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+section{display:flex;flex-direction:column;gap:12px}
+.hero{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:12px}
+.big{font-family:var(--mono);font-size:2.6rem;font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
+.bar{height:10px;background:var(--line);border-radius:6px;overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--accent);border-radius:6px}
+.bar.warn>i{background:var(--warn)} .bar.crit>i{background:var(--crit)}
+.row{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between}
+form{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+form .full{grid-column:1/-1}
+input,textarea{font:inherit;font-size:16px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0;width:100%;box-sizing:border-box}
+textarea{font-family:var(--mono);font-size:13px;min-height:90px}
+input:focus-visible,button:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button{font:inherit;font-weight:600;border:0;border-radius:10px;padding:11px 14px;cursor:pointer;background:var(--accent);color:var(--surface)}
+button.ghost{background:transparent;color:var(--muted);padding:4px 8px;font-weight:500}
+button.link{background:transparent;color:var(--accent);padding:0;font-weight:600}
+button.soft{background:var(--accent-soft);color:var(--accent)}
+button.danger{background:var(--crit-soft);color:var(--crit)}
+ul.list{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+ul.list li{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+ul.list li .c{flex:1;min-width:0;overflow-wrap:anywhere}
+.empty{color:var(--muted)}
+.pill{display:inline-block;font-size:.75rem;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)} .pill.crit{background:var(--crit-soft);color:var(--crit)}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.86rem;min-width:520px}
+th,td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;background:var(--bg)}
+tr.now td{background:var(--accent-soft)}
+tr.heavy td:nth-child(2){color:var(--crit);font-weight:600}
+tr.out td{color:var(--crit)}
+details summary{cursor:pointer;color:var(--accent);font-weight:600}
+details[open] summary{margin-bottom:8px}
+.chart svg{width:100%;height:auto;display:block}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.acc{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.acc b{font-family:var(--display);font-size:1.05rem}
+.note{font-size:.85rem;color:var(--muted)}
+.status{font-size:.8rem;color:var(--muted);min-height:1.2em}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+@media (prefers-reduced-motion:no-preference){.bar>i{transition:width .4s ease}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"><p class="muted">Cargando…</p></div>
+<script>
+(function(){
+const STORE='plan-gasto-v1';
+function load(){try{const s=JSON.parse(localStorage.getItem(STORE)||'null');if(s&&Array.isArray(s.gastos))return s}catch(e){}return {budget:3000,gastos:[],plan:null}}
+let state=load();
+if(!(state.budget>0))state.budget=3000;
+let storageOK=true;
+function save(){try{localStorage.setItem(STORE,JSON.stringify(state));storageOK=true}catch(e){storageOK=false}}
+
+const MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const fmt=n=>(n<0?'−':'')+'$'+Math.round(Math.abs(n)).toLocaleString('es-MX');
+const fmt2=n=>(n<0?'−':'')+'$'+Math.abs(n).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
+const key=(y,m)=>y+'-'+String(m).padStart(2,'0');
+const label=k=>{const [y,m]=k.split('-');return MES[+m-1]+' '+y.slice(2)};
+const nextK=k=>{let [y,m]=k.split('-').map(Number);m++;if(m>12){m=1;y++}return key(y,m)};
+const today=new Date();
+const NOWK=key(today.getFullYear(),today.getMonth()+1);
+const todayISO=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+
+// Tu plan (cuentas, pagos y entradas) vive solo en este iPhone; se carga pegando tu código
+let DEBTS={},INFLOWS={},ACCOUNTS=[],START='2026-10',SNAP='';
+function validPlan(p){return p&&Array.isArray(p.accounts)&&p.accounts.length&&p.debts&&typeof p.debts==='object'&&/^\d{4}-\d{2}$/.test(p.start||'')}
+function applyPlan(){const p=state.plan;if(!validPlan(p))return false;
+  ACCOUNTS=p.accounts.map(a=>({n:String(a.n),b:+a.b||0,r:+a.r||0,tax:+a.tax||0,cap:a.cap>0?+a.cap:1e9,lockUntil:a.lockUntil||null,cond:String(a.cond||'')}));
+  DEBTS=p.debts;INFLOWS=p.inflows||{};START=p.start;SNAP=p.snap||'';return true}
+const sum=a=>(a||[]).reduce((s,x)=>s+x[1],0);
+const spentIn=k=>state.gastos.filter(g=>g.fecha.slice(0,7)===k).reduce((s,g)=>s+g.monto,0);
+
+// Sobrante (o faltante) acumulado de meses anteriores
+function carryOver(){let c=0;for(let k=START;k<NOWK;k=nextK(k))c+=state.budget-spentIn(k);return c}
+
+function project(){
+  const acc=ACCOUNTS.map(a=>({...a}));
+  if(!acc.length)return {rows:[],lastMonth:null};
+  let k=START,rows=[],lastMonth=null;
+  for(let i=0;i<72;i++){
+    let intm=0;
+    acc.forEach(a=>{const cap=Math.min(a.b,a.cap),exc=Math.max(a.b-a.cap,0);
+      const g=cap*(Math.pow(1+a.r/365,30.4)-1)+exc*(Math.pow(1+.06/365,30.4)-1)-a.b*a.tax/12;a.b+=g;intm+=g;});
+    const actual=spentIn(k);
+    const spend=k<NOWK?actual:(k===NOWK?Math.max(actual,state.budget):state.budget);
+    const d=sum(DEBTS[k]),inc=sum(INFLOWS[k]);
+    let out=d+spend-inc;
+    if(out<0){acc[0].b+=-out;out=0}
+    for(const a of acc){if(a.lockUntil&&k<a.lockUntil)continue;const t=Math.min(out,a.b);a.b-=t;out-=t;if(out<=0)break}
+    const tot=acc.reduce((s,a)=>s+a.b,0);
+    rows.push({k,d,inc,int:intm,spend,tot:Math.max(tot,0),short:out>0.01});
+    if(out>0.01||tot<=1)break;
+    lastMonth=k;k=nextK(k);
+  }
+  return {rows,lastMonth};
+}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+
+function chart(rows){
+  const W=640,H=190,pl=46,pr=12,pt=12,pb=26;
+  const max=Math.max(...rows.map(r=>r.tot),1);
+  const ymax=Math.ceil(max/20000)*20000||20000;
+  const x=i=>pl+(rows.length<2?0:i*(W-pl-pr)/(rows.length-1));
+  const y=v=>pt+(H-pt-pb)*(1-v/ymax);
+  let grid='';
+  for(let v=0;v<=ymax;v+=ymax/4){grid+=`<line x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${pl-6}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="var(--mono)">${Math.round(v/1000)}k</text>`}
+  const pts=rows.map((r,i)=>`${x(i)},${y(r.tot)}`).join(' ');
+  const area=`${x(0)},${y(0)} ${pts} ${x(rows.length-1)},${y(0)}`;
+  let ticks='';
+  rows.forEach((r,i)=>{if(i%4===0||i===rows.length-1)ticks+=`<text x="${x(i)}" y="${H-8}" text-anchor="${i===rows.length-1?'end':i===0?'start':'middle'}" font-size="11" fill="var(--muted)" font-family="var(--mono)">${label(r.k)}</text>`});
+  const li=rows.length-1;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Saldo invertido proyectado por mes">${grid}<polygon points="${area}" fill="var(--accent-soft)"/><polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="2.5"/><circle cx="${x(li)}" cy="${y(rows[li].tot)}" r="4" fill="var(--accent)"/>${ticks}</svg>`;
+}
+
+let msg='';
+function render(){
+  if(!applyPlan()){renderSetup();return}
+  const {rows,lastMonth}=project();
+  const spent=spentIn(NOWK);
+  const carry=carryOver();
+  const avail=state.budget+carry;
+  const left=avail-spent;
+  const pct=avail>0?Math.min(100,spent/avail*100):100;
+  const cls=left<0?'crit':pct>=80?'warn':'';
+  const monthG=state.gastos.filter(g=>g.fecha.slice(0,7)===NOWK).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const totalNow=ACCOUNTS.reduce((s,a)=>s+a.b,0);
+  const debtLeft=Object.entries(DEBTS).filter(([k])=>k>=NOWK).reduce((s,[,v])=>s+sum(v),0);
+  const lasts=lastMonth?label(lastMonth):'—';
+  const lastDebt=Object.keys(DEBTS).filter(k=>sum(DEBTS[k])>0).sort().pop();
+  const past=Object.entries(state.gastos.reduce((o,g)=>{const k=g.fecha.slice(0,7);if(k!==NOWK)o[k]=(o[k]||0)+g.monto;return o},{})).sort().reverse();
+  document.getElementById('app').innerHTML=`
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="eyebrow">${today.getDate()} ${MES[today.getMonth()]} ${today.getFullYear()}</span>
+    <h1>Lo que puedes gastar sin quedarte en ceros</h1>
+  </header>
+
+  <div class="hero">
+    <div class="row"><span class="eyebrow">Te queda para salidas en ${MES[today.getMonth()]}</span>
+      <span class="pill ${cls}">${cls==='crit'?'Te pasaste':cls==='warn'?'Ya casi':'Vas bien'}</span></div>
+    <div class="big" style="color:${left<0?'var(--crit)':'var(--ink)'}">${fmt2(left)}</div>
+    <div class="bar ${cls}"><i style="width:${pct}%"></i></div>
+    <div class="muted" style="font-size:.88rem">Gastado <span class="num">${fmt2(spent)}</span> de <span class="num">${fmt(avail)}</span>
+      ${Math.abs(carry)>=1?`<br><span class="num">${fmt(state.budget)}</span> del mes ${carry>0?'+':'−'} <span class="num" style="color:${carry>0?'var(--accent)':'var(--crit)'}">${fmt(Math.abs(carry))}</span> ${carry>0?'que te sobró de meses anteriores':'que te pasaste antes'}`:''}</div>
+    <div><button class="link" id="editB">Cambiar presupuesto mensual</button></div>
+    <form id="bForm" hidden style="grid-template-columns:1fr auto">
+      <input id="bIn" type="number" inputmode="decimal" min="0" step="100" value="${state.budget}" aria-label="Presupuesto mensual">
+      <button type="submit">Guardar</button>
+    </form>
+  </div>
+
+  <section>
+    <h2>Anotar un gasto</h2>
+    <form id="gForm">
+      <input id="gConcepto" class="full" placeholder="¿En qué? (ej. cine, tacos, Uber)" required maxlength="60" autocomplete="off">
+      <input id="gMonto" type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="Monto" required>
+      <input id="gFecha" type="date" value="${todayISO()}" required aria-label="Fecha">
+      <button type="submit" class="full">Agregar gasto</button>
+    </form>
+    <div class="status" id="status">${esc(msg)}${storageOK?'':' No se pudo guardar en este iPhone.'}</div>
+    <ul class="list">${monthG.length?monthG.map(g=>`<li><div class="c"><div>${esc(g.concepto)}</div><div class="muted num" style="font-size:.8rem">${g.fecha.slice(8)} ${MES[+g.fecha.slice(5,7)-1]}</div></div><span class="num">${fmt2(g.monto)}</span><button class="ghost" data-del="${g.id}" aria-label="Borrar ${esc(g.concepto)}">✕</button></li>`).join(''):`<li class="empty">Aún no anotas gastos este mes. Lo que agregues se resta de tus ${fmt(avail)}.</li>`}</ul>
+    ${past.length?`<details><summary>Meses anteriores</summary><ul class="list">${past.map(([k,v])=>`<li><div class="c">${label(k)}</div><span class="num" style="color:${v>state.budget?'var(--crit)':'var(--accent)'}">${fmt2(v)}</span></li>`).join('')}</ul></details>`:''}
+  </section>
+
+  <section>
+    <h2>Con ${fmt(state.budget)} al mes, tus ahorros duran hasta ${lasts}</h2>
+    <p class="muted" style="margin:0">Empezaste ${esc(SNAP)} con <span class="num">${fmt(totalNow)}</span> invertidos. Te quedan <span class="num">${fmt(debtLeft)}</span> de pagos a MSI${lastDebt?', que terminan en '+label(lastDebt):''}. Los meses pasados usan lo que de verdad anotaste.</p>
+    <div class="chart">${chart(rows)}</div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Mes</th><th>Pagos</th><th>Entra</th><th>Rendimiento</th><th>Salidas</th><th>Te queda</th></tr></thead>
+      <tbody>${rows.map(r=>`<tr class="${r.k===NOWK?'now':''} ${r.d>5000?'heavy':''} ${r.short?'out':''}"><td>${label(r.k)}</td><td class="num">${r.d?fmt(r.d):'—'}</td><td class="num">${r.inc?fmt(r.inc):'—'}</td><td class="num">+${fmt(r.int)}</td><td class="num">${fmt(r.spend)}</td><td class="num">${r.short?'se acaba':fmt(r.tot)}</td></tr>`).join('')}</tbody>
+    </table></div>
+    <details><summary>Ver pagos por tarjeta, mes por mes</summary>
+      <ul class="list">${[...new Set([...Object.keys(DEBTS),...Object.keys(INFLOWS)])].sort().map(k=>`<li style="flex-direction:column;align-items:stretch;gap:4px"><b>${label(k)}</b>${(DEBTS[k]||[]).map(([n,v])=>`<div class="row"><span>${n}</span><span class="num">${fmt2(v)}</span></div>`).join('')}${(INFLOWS[k]||[]).map(([n,v])=>`<div class="row" style="color:var(--accent)"><span>+ ${n}</span><span class="num">${fmt2(v)}</span></div>`).join('')}</li>`).join('')}</ul>
+    </details>
+  </section>
+
+  <section>
+    <h2>Tus cuentas</h2>
+    <div class="cards">${ACCOUNTS.map(a=>`<div class="acc"><span class="eyebrow">${a.n}</span><b class="num">${fmt(a.b)}</b><span class="num" style="color:var(--accent);font-weight:600">${Math.round(a.r*100)}% anual${a.cap<1e8?' · tope '+fmt(a.cap):''}</span><span class="note">${a.cond}</span></div>`).join('')}</div>
+    <p class="note" style="margin:0">Los pagos salen de tus cuentas en el orden de arriba; las que están bloqueadas se usan hasta que se liberan. Saldos ${esc(SNAP)}. Las tasas cambian casi cada mes. Ninguna compra nueva a meses está incluida: cada una sale de tu presupuesto de salidas.</p>
+  </section>
+
+  <section>
+    <h2>Respaldo</h2>
+    <p class="note" style="margin:0">Tu plan y tus gastos se guardan solo en este iPhone. Copia un respaldo de vez en cuando y pégalo en Notas; si cambias de celular o se borra, lo pegas aquí abajo.</p>
+    <div class="btns"><button class="soft" id="copyB">Copiar respaldo</button></div>
+    <details><summary>Restaurar un respaldo</summary>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <textarea id="restoreIn" aria-label="Pega aquí tu respaldo" placeholder='{"budget":3000,"gastos":[…]}'></textarea>
+        <div class="btns"><button class="danger" id="restoreB">Reemplazar mis datos con este respaldo</button></div>
+      </div>
+    </details>
+  </section>`;
+  bind();
+}
+function renderSetup(){
+  document.getElementById('app').innerHTML=`
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="eyebrow">Primera vez</span>
+    <h1>Carga tu plan</h1>
+  </header>
+  <section>
+    <p class="muted" style="margin:0">Pega aquí el código de tu plan (tus cuentas, pagos y entradas). Se guarda solo en este iPhone; no se sube a ningún lado.</p>
+    <textarea id="planIn" aria-label="Código de tu plan" placeholder='{"start":"2026-10","accounts":[…]}' style="min-height:160px"></textarea>
+    <button id="planB">Cargar plan</button>
+    <div class="status" id="status">${esc(msg)}</div>
+  </section>`;
+  document.getElementById('planB').onclick=()=>{
+    let p;try{p=JSON.parse(document.getElementById('planIn').value)}catch(e){setMsg('Ese texto no es un código válido. Cópialo completo, desde { hasta }.');return}
+    if(p&&p.plan&&Array.isArray(p.gastos)){state={budget:p.budget>0?p.budget:3000,gastos:p.gastos,plan:p.plan}}
+    else if(validPlan(p)){state.plan=p;if(p.budget>0)state.budget=p.budget}
+    else{setMsg('Ese texto no es un código válido.');return}
+    if(!validPlan(state.plan)){setMsg('Ese texto no es un código válido.');return}
+    save();msg='Plan cargado.';render();};
+}
+function setMsg(t){msg=t;const s=document.getElementById('status');if(s)s.textContent=t;clearTimeout(setMsg.t);setMsg.t=setTimeout(()=>{msg='';const s2=document.getElementById('status');if(s2)s2.textContent=''},3000)}
+function bind(){
+  document.getElementById('gForm').onsubmit=e=>{e.preventDefault();
+    const c=document.getElementById('gConcepto').value.trim();
+    const m=parseFloat(document.getElementById('gMonto').value);
+    const f=document.getElementById('gFecha').value||todayISO();
+    if(!c||!(m>0))return;
+    state.gastos.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),concepto:c.slice(0,60),monto:Math.round(m*100)/100,fecha:f});
+    save();msg='Anotado: '+c+' · '+fmt2(m);render();};
+  document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{state.gastos=state.gastos.filter(g=>g.id!==b.dataset.del);save();render();});
+  document.getElementById('editB').onclick=()=>{const f=document.getElementById('bForm');f.hidden=!f.hidden;if(!f.hidden)document.getElementById('bIn').focus()};
+  document.getElementById('bForm').onsubmit=e=>{e.preventDefault();const v=parseFloat(document.getElementById('bIn').value);if(v>0){state.budget=Math.round(v);save();render();}};
+  document.getElementById('copyB').onclick=()=>{const t=JSON.stringify(state);
+    const fallback=()=>{const ta=document.getElementById('restoreIn');ta.closest('details').open=true;ta.value=t;ta.select();setMsg('Selecciona el texto y cópialo.')};
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(()=>setMsg('Respaldo copiado. Pégalo en Notas.'),fallback)}else fallback()};
+  const rb=document.getElementById('restoreB');
+  rb.onclick=()=>{
+    let s;try{s=JSON.parse(document.getElementById('restoreIn').value)}catch(e){setMsg('Ese texto no es un respaldo válido.');return}
+    if(!s||!Array.isArray(s.gastos)){setMsg('Ese texto no es un respaldo válido.');return}
+    if(rb.dataset.sure!=='1'){rb.dataset.sure='1';rb.textContent='Toca otra vez para confirmar';return}
+    state={budget:s.budget>0?s.budget:3000,gastos:s.gastos.filter(g=>g&&g.fecha&&g.monto>0),plan:validPlan(s.plan)?s.plan:state.plan};save();msg='Respaldo restaurado.';render();};
+}
+render();
+// Al volver a abrir la app otro día, refresca la fecha
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){const d=new Date();if(d.toDateString()!==today.toDateString())location.reload()}});
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}
+})();
+</script>
+</body>
+</html>
